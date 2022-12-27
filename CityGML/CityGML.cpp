@@ -5,6 +5,7 @@
 #include "CityGML.h"
 #include <vector>
 #include <direct.h>
+#include <jni.h>
 
 
 using namespace std;
@@ -71,5 +72,50 @@ int main() {
         ofs << data;
         ofs.close();
     }
+
+    // JVMオプション
+    JNIEnv* env;
+    JavaVM* jvm;
+    JavaVMOption options[1];
+    options[0].optionString = const_cast < char*> ("-Djava.class.path=./lib/citygml-tools-2.0.0-rc.1.jar");
+    JavaVMInitArgs vm_args;
+    vm_args.version = JNI_VERSION_1_8;
+    vm_args.options = options;
+    vm_args.nOptions = 1;
+
+    // JVMの初期化、起動
+    int res = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+    if (res) {
+        cout << "Can't create JavaVM \n" << res << endl;
+        return 1;
+        }
+
+
+    // クラス検索
+    jclass cls = env->FindClass("%APP_HOME%\lib\citygml-tools-2.0.0-rc.1.jar");
+    if (cls == 0) {
+        cout << "Can't find class" << endl;
+        return 1;
+    }
+
+    // クラス情報をインスタンス化するために<init>メソッドのメソッドIDを取得
+    jmethodID cns = env->GetMethodID(cls, "<init>", "()V");
+    if (cns == NULL) {
+        cout << "Can't get <init> method." << endl;
+        return 1;
+    }
+    jobject obj = env->NewObject(cls, cns);
+
+
+
+
+
+    //JavaVMの終了
+    res = jvm->DestroyJavaVM();
+    if (res) {
+        cout << "Can't destroy JavaVM \n" << res << endl;
+    }
+
+
     return 0;
 }
